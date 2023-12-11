@@ -7,16 +7,16 @@ module ControlUnit(
     output reg[3:0] ALUcontrol,
     output reg ALUSrc,
     output reg RegWrite,
-    input [5:0] op,
-    input clk
+    input [5:0] Op,
+    input Clk
     );
     parameter   addOp = 6'b001,
                 lwOp = 6'b010,
                 swOp = 6'b101;
     parameter   aluAdd = 4'b0101; 
               
-    always @ (posedge clk)
-    case(op)
+    always @ (posedge Clk)
+    case(Op)
         addOp : begin
             RegDst = 1'b1;
             MemRead = 1'b0;
