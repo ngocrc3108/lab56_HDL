@@ -13,9 +13,7 @@ module Data_Path (
     );
     wire [4:0] WR;
     wire [31:0] WD, RD1, RD2, signExtended, ALUinB, readData;
-    
-    //initial $monitor("Data_Path: MemRead = %b, in015 = %d ALUSrc = %b, signExtended = %d, RD1 = %2d, ALUinB = %2d", MemRead, Intruction[15:0], ALUSrc, signExtended, RD1, ALUinB);
-    
+        
     mux_2to1 #(.nBit(5)) 
     regDstMux(
         .out(WR),
@@ -53,9 +51,7 @@ module Data_Path (
         .B(ALUinB),
         .ALUcontrol(ALUcontrol)
     );
-    
-    //initial $monitor("aluResult = %d", aluResult);
-    
+        
     Memory mem (
         .Address(aluResult),
         .WriteData(RD2),
@@ -74,7 +70,7 @@ module Data_Path (
 endmodule
 
 module mux_2to1 
-    #(parameter nBit = 1)(
+    #(parameter nBit = 32)(
     output [0:nBit-1] out,
     input [0:nBit-1] in0,
     input [0:nBit-1] in1,
@@ -95,43 +91,30 @@ module Registers (
     );
     reg[31:0] mem[0:31];
     
-    reg [4:0] regWriteAddress;
-    
-    initial for(integer i = 0; i < 10; i = i + 1) begin
-        mem[i] = i;
+    initial begin 
+        for(integer i = 0; i < 7; i = i + 1) 
+            mem[i] = i;
+//        $monitor("#Register: reg[0] = %0d", mem[0]);
+//        $monitor("#Register: reg[1] = %0d", mem[1]);
+//        $monitor("#Register: reg[2] = %0d", mem[2]);
+//        $monitor("#Register: reg[3] = %0d", mem[3]);
+//        $monitor("#Register: reg[4] = %0d", mem[4]);
+//        $monitor("#Register: reg[5] = %0d", mem[5]);
+//        $monitor("#Register: reg[6] = %0d", mem[6]);
     end
     
-    initial begin
-    $monitor("reg0 = %d", mem[0]);
-    $monitor("reg1 = %d", mem[1]);
-    $monitor("reg2 = %d", mem[2]);
-    $monitor("reg3 = %d", mem[3]);
-    $monitor("reg4 = %d", mem[4]);
-    $monitor("reg5 = %d", mem[5]);
-    $monitor("reg6 = %d", mem[6]);
-    $monitor("reg7 = %d", mem[7]);
-    $monitor("reg8 = %d", mem[8]);
-    $monitor("reg9 = %d", mem[9]);
-    end
+    //initial $monitor("RegWrite = %b, WriteAddress = %d, WriteAddress = %d", RegWrite, WriteAddress, WriteAddress);
     
-//    integer debugTime = 0;
-//    initial forever #1 debugTime = debugTime + 1;
-    
-    //initial $monitor("RegWrite = %b, WriteAddress = %d, regWriteAddress = %d", RegWrite, WriteAddress, regWriteAddress);
-    
-    always @ (posedge Clk) begin
+    always @ (posedge Clk)
         if(RegWrite) begin
-            //$display("write begin");
-            mem[regWriteAddress] <= WriteData;
-            $display("write reg%d: %d", regWriteAddress, WriteData);
-        end    
-        begin
-            ReadData1 <= mem[ReadAddress1]; 
-            ReadData2 <= mem[ReadAddress2];
-        end
-        #1regWriteAddress = WriteAddress;
-        //$display("reg clk");
-    end
+            mem[WriteAddress] <= WriteData;
+            $display("#Register@write: reg[%0d]: %0d", WriteAddress, WriteData);
+        end   
+    
+    always @ (*) begin
+        ReadData1 <= mem[ReadAddress1];
+        ReadData2 <= mem[ReadAddress2];
+    end 
 endmodule
 
 module ALU (
@@ -142,7 +125,7 @@ module ALU (
     );
     parameter aluAdd = 4'b0101;
     
-    //initial $monitor("ALUcontrol = %d, A = %d, B = %d, result = %d", ALUcontrol, A, B, Result);
+    //initial $monitor("ALU# A = %d, B = %d, result = %d", ALUcontrol, A, B, Result);
     
     always @(*) 
         case(ALUcontrol)
@@ -155,7 +138,7 @@ module SignExtend (
     output[31:0] out,
     input[15:0] in
 );
-    //assign out[31:0] = {16{in[15]}, in[15:0]};
+    //assign out[31:0] = {16{in[15]}, in[15:0]}; // error???
     assign out[15:0] = in;
     assign out[31:16] = in[15] ? 16'hffff : 16'h0;
 endmodule
@@ -170,22 +153,24 @@ module Memory (
     );
     reg [31:0] mem[63:0];
     
-//    initial for(integer i = 0; i < 32; i = i + 1)
-//        $monitor("mem%2d = %2d", mem[i]);
-    
-//      initial begin
-//        $monitor("mem2 = %d", mem[2]);  
-//        $monitor("Addr = %d", Address);
-//      end
+//    initial begin
+//        $monitor("#change: mem[0]: %2d", mem[0]);
+//        $monitor("#change: mem[1]: %2d", mem[1]);
+//        $monitor("#change: mem[2]: %2d", mem[2]);
+//        $monitor("#change: mem[3]: %2d", mem[3]);
+//        $monitor("#change: mem[4]: %2d", mem[4]);
+//        $monitor("#change: mem[5]: %2d", mem[5]);
+//        $monitor("#change: mem[6]: %2d", mem[6]);
+//    end
       
-    always @ (posedge Clk) begin
-        if(MemRead) begin
-            $display("read mem at %d", Address);
-            ReadData <= mem[Address];
-        end
+    always @ (posedge Clk)
         if(MemWrite) begin
-            $display("write mem%d: %d", Address, WriteData);
             mem[Address] <= WriteData;
+            $display("#Memory@write: mem[%0d]: %0d", Address, WriteData);
         end
-    end
+    always @ (*) // MemRead or Address
+        if(MemRead) begin
+            ReadData <= mem[Address];
+            #1 $display("#Memory@read: mem[%0d]: %0d", Address, ReadData);
+        end
 endmodule

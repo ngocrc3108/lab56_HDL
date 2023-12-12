@@ -12,10 +12,10 @@ module ControlUnit(
     );
     parameter   addOp = 6'b001,
                 lwOp = 6'b010,
-                swOp = 6'b101;
+                swOp = 6'b100;
     parameter   aluAdd = 4'b0101; 
               
-    always @ (posedge Clk)
+    always @ (*)
     case(Op)
         addOp : begin
             RegDst = 1'b1;
